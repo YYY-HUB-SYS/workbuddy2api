@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>WorkBuddy2API · 启动台 UI 预览</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0E14'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%234F8DF7' font-family='Arial'%3EW%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    color-scheme:dark;
+    --w:870px;
+    --bg:#0B0E14; --panel:#10141D; --card:#151A24; --card2:#1B222F;
+    --line:#232B3A; --tx:#E6EAF2; --tx2:#8A94A6; --tx3:#78819A;
+    --acc:#4F8DF7; --acc2:#7C5CFF; --ok:#34D399; --warn:#FBBF24; --err:#F87171;
+    --term:#080A0F; --sb:#252D3C; --dot:#232B3A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#06080C; color:var(--tx); min-height:100vh;
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column; align-items:center; padding:24px 16px 40px;
+  }
+  .hintbar{
+    width:var(--w); max-width:100%; margin-bottom:14px; font-size:12px; color:var(--tx3);
+    line-height:1.7; text-align:center;
+  }
+  .hintbar b{color:var(--tx2);font-weight:600}
+  .hintbar span{color:var(--acc)}
+  .ns-warn{
+    width:var(--w); max-width:100%; margin:0 auto 14px; font-size:12px;
+    color:var(--warn); line-height:1.7; text-align:center;
+  }
+
+  /*  宽度推导表  */
+  .derivation{
+    width:var(--w); max-width:100%; margin:14px 0 0; font-size:11.5px;
+    background:#0A0D12; border:1px solid var(--line); border-radius:8px; padding:0 12px;
+  }
+  .derivation summary{
+    cursor:pointer; padding:9px 0; color:var(--tx3); font-size:11.5px; user-select:none;
+  }
+  .derivation summary:hover{color:var(--tx2)}
+  .derivation table{margin-bottom:10px}
+  .derivation td{padding:4px 6px;font-size:11px}
+  .derivation td:last-child{color:var(--tx3);font-size:10.5px}
+  .derivation th{padding:4px 6px}
+  .derivation .mono{color:var(--tx2)}
+  .derivation tr.sum td{color:var(--tx);font-weight:600}
+  .derivation tr.sum td:last-child{color:var(--acc);font-weight:600}
+  .derivation b{color:var(--tx)}
+
+  /* ── 窗口外壳 ── */
+  .win{
+    width:var(--w); height:730px; max-width:100%; background:var(--bg);
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    display:flex; flex-direction:column;
+    box-shadow:0 24px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.03);
+  }
+  .titlebar{
+    position:relative;
+    height:32px; flex:0 0 32px; background:var(--panel);
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; padding:0 12px; gap:8px;
+  }
+  .tb-dot{width:10px;height:10px;border-radius:50%;background:var(--dot)}
+  .tb-title{
+    position:absolute; left:50%; transform:translateX(-50%);
+    font-size:11.5px; color:var(--tx3); letter-spacing:.3px; white-space:nowrap;
+  }
+  .tb-right{margin-left:auto;display:flex;gap:2px}
+  .tb-btn{
+    background:transparent;border:none;color:var(--tx3);font-family:inherit;
+    font-size:12px;line-height:1;padding:4px 7px;border-radius:4px;cursor:pointer;
+  }
+  .tb-btn:hover{background:var(--card2);color:var(--tx)}
+  .tb-btn.close:hover{background:rgba(248,113,113,.18);color:var(--err)}
+
+  .body{flex:1;display:flex;min-height:0}
+
+  /* ── 左侧导航 108px ── */
+  .side{
+    width:108px; flex:0 0 108px; background:var(--panel);
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; padding:12px 6px; gap:3px;
+  }
+  .side-brand{
+    font-size:10.5px; color:var(--tx3); padding:0 6px 10px; letter-spacing:.5px;
+  }
+  .nav{
+    display:flex; align-items:center; gap:6px; width:100%; padding:8px;
+    border-radius:7px; font-family:inherit; font-size:12.5px; color:var(--tx2);
+    cursor:pointer; user-select:none; text-align:left; white-space:nowrap;
+    transition:background .13s,color .13s; border:1px solid transparent; background:transparent;
+  }
+  .nav:hover{background:var(--card);color:var(--tx)}
+  .nav.on{background:var(--card2);color:var(--tx);border-color:var(--line)}
+  .nav .ic{width:14px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;opacity:.9}
+  .nav.on .ic{color:var(--acc)}
+  .side-foot{
+    margin-top:auto; font-size:9.5px; color:var(--tx3); line-height:1.5;
+    padding:8px 6px 0; border-top:1px solid var(--line); white-space:pre-line;
+  }
+
+  /* ── 主区 ── */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+  .scroll{
+    flex:1;overflow-y:auto;padding:14px 14px 4px;
+    scrollbar-width:thin; scrollbar-color:var(--sb) transparent;
+  }
+  .scroll::-webkit-scrollbar{width:9px}
+  .scroll::-webkit-scrollbar-thumb{background:var(--sb);border-radius:6px;border:2px solid var(--bg)}
+  .scroll::-webkit-scrollbar-track{background:transparent}
+
+  .page{display:none}
+  .page.on{display:block}
+
+  .h{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:2px;letter-spacing:.2px}
+  .sub{font-size:10.5px;color:var(--tx3);margin-bottom:12px;line-height:1.5}
+
+  /* ── 卡片 ── */
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:9px;
+    padding:12px; margin-bottom:11px;
+  }
+  .card-t{
+    font-size:12.5px; font-weight:600; color:var(--tx);
+    display:flex; align-items:center; gap:8px; margin-bottom:10px;
+  }
+  .card-t .pill{margin-left:2px}
+  .card-t .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .row:last-child{margin-bottom:0}
+  .lbl{font-size:12px;color:var(--tx2);flex:0 0 auto}
+  .note{font-size:10.5px;color:var(--tx3);line-height:1.6}
+  .ilink{color:var(--acc);text-decoration:none;font-size:11.5px}
+  .ilink:hover{text-decoration:underline}
+
+  /* ── 工具类 ── */
+  .spacer{flex:1}
+  .mt4{margin-top:4px} .mt8{margin-top:8px} .mt10{margin-top:10px}
+  .mb11{margin-bottom:11px}
+  .gap16{gap:16px}
+  .tx-ok{color:var(--ok)} .tx-dim{color:var(--tx3)} .tx-micro{font-size:10px}
+  .dot-ok{color:var(--ok);font-size:12px;line-height:1}
+  .strong13{font-size:13px;font-weight:600}
+  .w44{width:44px} .w52{width:52px} .w60{width:60px}
+  .vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+  /*  图标：Lucide 内联 SVG（stroke=currentColor 继承文字色）  */
+  svg.icn{width:1em;height:1em;flex:0 0 auto;display:block}
+  .term svg.icn{display:inline-block;vertical-align:-1.5px;width:11px;height:11px}
+  .step{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:15px;height:15px;border-radius:50%;flex:0 0 auto;
+    background:rgba(255,255,255,.16);font-size:9.5px;font-weight:700;line-height:1;
+  }
+
+  /*  pill  */
+  .pill{
+    display:inline-flex;align-items:center;gap:4px;font-size:10.5px;
+    padding:3px 8px;border-radius:20px;background:var(--card2);
+    border:1px solid var(--line);color:var(--tx2);white-space:nowrap;
+  }
+  .pill.ok{color:var(--ok);border-color:rgba(52,211,153,.28);background:rgba(52,211,153,.09)}
+  .pill.warn{color:var(--warn);border-color:rgba(251,191,36,.28);background:rgba(251,191,36,.09)}
+  .pill.err{color:var(--err);border-color:rgba(248,113,113,.28);background:rgba(248,113,113,.09)}
+  .pill.acc{color:var(--acc);border-color:rgba(79,141,247,.3);background:rgba(79,141,247,.1)}
+
+  /*  按钮  */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:5px;
+    font-family:inherit; font-size:11.5px;padding:6px 11px;border-radius:6px;cursor:pointer;
+    background:var(--card2);color:var(--tx);border:1px solid var(--line);
+    transition:filter .12s,transform .06s;user-select:none;white-space:nowrap;
+  }
+  .btn:hover{filter:brightness(1.22)}
+  .btn:active{transform:translateY(1px)}
+  .btn.acc{background:var(--acc);color:#fff;border-color:transparent;font-weight:600}
+  .btn.green{background:var(--ok);color:#06281C;border-color:transparent;font-weight:600}
+  .btn.err{background:var(--err);color:#2A0E0E;border-color:transparent;font-weight:600}
+  .btn.full{width:100%;padding:9px;font-size:12.5px}
+  .btn.sm{padding:3px 7px;font-size:10px}
+
+  input[type=text],input[type=password]{
+    background:var(--card2);border:1px solid var(--line);border-radius:6px;
+    color:var(--tx);font-size:11.5px;padding:5px 9px;outline:none;
+    font-family:ui-monospace,Consolas,monospace;
+  }
+  input[type=text]:focus,input[type=password]:focus{border-color:var(--acc)}
+  input.w70{width:70px} input.flex{flex:1;min-width:120px}
+
+  /*  开关 / 单选（原生控件 + appearance:none）  */
+  .chk{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .chk .chk-t{font-size:12px;color:var(--tx)}
+  .chk .pill{margin-left:auto}
+  .cb{
+    appearance:none;-webkit-appearance:none;
+    width:15px;height:15px;border-radius:4px;border:1px solid var(--line);
+    background:var(--card2);display:inline-grid;place-items:center;
+    font-size:10px;color:#fff;margin:0;cursor:pointer;flex:0 0 auto;
+  }
+  .cb:checked{
+    background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/9px 9px no-repeat;
+    border-color:var(--acc);
+  }
+  .radio{
+    appearance:none;-webkit-appearance:none;
+    width:15px;height:15px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card2);margin:0;cursor:pointer;flex:0 0 auto;
+  }
+  .radio:checked{
+    background:radial-gradient(circle,#fff 0 2.5px,var(--acc) 3px);
+    border-color:var(--acc);
+  }
+  .chk-block{margin-bottom:10px}
+  .chk-block:last-child{margin-bottom:0}
+  .chk-note{font-size:10.5px;color:var(--tx3);padding-left:23px;margin-top:3px}
+
+  /*  状态格  */
+  .tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:11px}
+  .tile{
+    background:var(--card);border:1px solid var(--line);border-radius:9px;
+    padding:10px 8px;text-align:center;
+  }
+  .tile .k{font-size:10px;color:var(--tx3);margin-bottom:5px}
+  .tile .v{font-size:17px;font-weight:700;color:var(--tx);letter-spacing:-.2px}
+  .tile .v.c1{color:var(--acc)} .tile .v.c2{color:var(--acc2)}
+  .tile .v.ok{color:var(--ok)} .tile .v.warn{color:var(--warn)}
+  .tile .u{font-size:9.5px;color:var(--tx3);margin-top:2px}
+
+  /*  实时吞吐图（任务管理器风格：网格 + 面积填充 + 平滑滚动）  */
+  .graphs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .graph{
+    background:var(--term);border:1px solid var(--line);border-radius:7px;
+    padding:8px 8px 4px;min-width:0;
+  }
+  .g-head{display:flex;align-items:baseline;gap:5px;margin-bottom:5px}
+  .g-name{font-size:10.5px;color:var(--tx2)}
+  .g-val{
+    margin-left:auto;font-size:15px;font-weight:700;color:var(--acc);
+    font-variant-numeric:tabular-nums;line-height:1;
+  }
+  .g-val.c2{color:var(--acc2)}
+  .g-unit{font-size:9.5px;color:var(--tx3)}
+  .graph canvas{display:block;width:100%;height:110px}
+  @media (max-width:520px){.graphs{grid-template-columns:1fr}}
+
+  /*  表格  */
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{
+    text-align:left;font-size:10.5px;color:var(--tx2);font-weight:500;
+    padding:5px 6px;border-bottom:1px solid var(--line);
+  }
+  th.r,td.r{text-align:right}
+  td{padding:6px;border-bottom:1px solid rgba(35,43,58,.55);color:var(--tx)}
+  tbody tr:last-child td{border-bottom:none}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:var(--tx2)}
+  .empty{font-size:11px;color:var(--tx3);padding:8px 2px}
+
+  /*  终端日志  */
+  .term{
+    background:var(--term);border:1px solid var(--line);border-radius:7px;
+    padding:9px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;
+    line-height:1.75;color:#9AA6BC;max-height:190px;overflow-y:auto;white-space:pre;
+    scrollbar-width:thin;scrollbar-color:var(--sb) transparent;
+  }
+  .term::-webkit-scrollbar{width:8px}
+  .term::-webkit-scrollbar-thumb{background:var(--sb);border-radius:5px}
+  .term .g{color:var(--ok)} .term .r{color:var(--err)} .term .y{color:var(--warn)}
+  .term .d{color:var(--tx3)} .term .b{color:var(--acc)}
+
+  /*  底部提示条  */
+  .toastbar{
+    flex:0 0 auto;height:30px;background:var(--panel);border-top:1px solid var(--line);
+    display:flex;align-items:center;padding:0 13px;font-size:11px;color:var(--tx3);
+  }
+  .toastbar .t{color:var(--tx2)}
+  .toastbar .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);margin-right:7px}
+
+  /*  键盘焦点  */
+  :focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+
+<noscript><p class="ns-warn">此预览需要 JavaScript 切换页面；开关/单选已改用原生控件，禁用 JS 时仍可操作。</p></noscript>
+
+<div class="hintbar">
+  <b>WorkBuddy2API · 启动台</b> UI 预览稿 — <span>870 × 730</span>（宽度锁死，由日志行宽反推）<br>
+  点左侧导航切换页面 · 数据取自本机真实 <span>logs/gateway.log</span>
+</div>
+
+<details class="derivation">
+  <summary>宽度 870 是怎么算出来的（点击展开）</summary>
+  <table>
+    <tr><th>项</th><th class="r">值</th><th>说明</th></tr>
+    <tr><td>日志最长行</td><td class="r mono">116 字符</td><td class="mono">logs/gateway.log #016（tok=12018）</td></tr>
+    <tr><td>字体</td><td class="r mono">10.5px</td><td>ui-monospace / Consolas，实测 <b>5.7729 px/字符</b></td></tr>
+    <tr><td>文本宽度</td><td class="r mono">669.66 px</td><td>canvas measureText 与 DOM 实测一致</td></tr>
+    <tr><td>界面 chrome</td><td class="r mono">183 px</td><td>侧栏 108 + 各层 padding/border 75</td></tr>
+    <tr><td>终端纵向滚动条</td><td class="r mono">10 px</td><td>scrollbar-width:thin，实测</td></tr>
+    <tr><td>窗口边框</td><td class="r mono">2 px</td><td>左右各 1</td></tr>
+    <tr class="sum"><td>临界宽度</td><td class="r mono">865 px</td><td>实测：860 溢出 4px，865 正好放下</td></tr>
+    <tr class="sum"><td>最终取值</td><td class="r mono">870 px</td><td>865 + 5px 余量（防字体回退 / DPI 取整）</td></tr>
+  </table>
+</details>
+
+<div class="win">
+  <h1 class="vh">WorkBuddy2API 启动台</h1>
+  <div class="titlebar">
+    <div class="tb-dot"></div><div class="tb-dot"></div><div class="tb-dot"></div>
+    <div class="tb-title">WorkBuddy2API · 启动台</div>
+    <div class="tb-right">
+      <button type="button" class="tb-btn" aria-label="最小化"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+</svg></button>
+      <button type="button" class="tb-btn" aria-label="最大化"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="18" height="18" x="3" y="3" rx="2" />
+</svg></button>
+      <button type="button" class="tb-btn close" aria-label="关闭"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 6 6 18" />
+  <path d="m6 6 12 12" />
+</svg></button>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- 侧栏：tablist 结构，支持方向键切换 -->
+    <div class="side" role="tablist" aria-label="启动台导航">
+      <div class="side-brand">启动台</div>
+      <button type="button" class="nav on" role="tab" id="tab-ov" aria-controls="ov" aria-selected="true"><span class="ic"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="7" height="9" x="3" y="3" rx="1" />
+  <rect width="7" height="5" x="14" y="3" rx="1" />
+  <rect width="7" height="9" x="14" y="12" rx="1" />
+  <rect width="7" height="5" x="3" y="16" rx="1" />
+</svg></span>总览</button>
+      <button type="button" class="nav" role="tab" id="tab-ac" aria-controls="ac" aria-selected="false"><span class="ic"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+  <circle cx="9" cy="7" r="4" />
+  <line x1="19" x2="19" y1="8" y2="14" />
+  <line x1="22" x2="16" y1="11" y2="11" />
+</svg></span>添加账号</button>
+      <button type="button" class="nav" role="tab" id="tab-us" aria-controls="us" aria-selected="false"><span class="ic"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+  <path d="M18 17V9" />
+  <path d="M13 17V5" />
+  <path d="M8 17v-3" />
+</svg></span>用量</button>
+      <button type="button" class="nav" role="tab" id="tab-md" aria-controls="md" aria-selected="false"><span class="ic"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+  <path d="m3.3 7 8.7 5 8.7-5" />
+  <path d="M12 22V12" />
+</svg></span>模型</button>
+      <button type="button" class="nav" role="tab" id="tab-lg" aria-controls="lg" aria-selected="false"><span class="ic"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 12h-5" />
+  <path d="M15 8h-5" />
+  <path d="M19 17V5a2 2 0 0 0-2-2H4" />
+  <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
+</svg></span>日志</button>
+      <button type="button" class="nav" role="tab" id="tab-ab" aria-controls="ab" aria-selected="false"><span class="ic"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="M12 16v-4" />
+  <path d="M12 8h.01" />
+</svg></span>关于</button>
+      <div class="side-foot">关闭窗口
+最小化到托盘</div>
+    </div>
+
+    <div class="main">
+      <div class="scroll">
+
+        <!-- ══ 总览 ══ -->
+        <section class="page on" role="tabpanel" id="ov" aria-labelledby="tab-ov" tabindex="0">
+          <h2 class="h">总览</h2>
+          <p class="sub">一键启动 / 停止网关，配置端口与密钥</p>
+
+          <div class="card">
+            <h3 class="card-t">运行状态</h3>
+            <div class="row">
+              <span class="dot-ok">●</span>
+              <span class="strong13">运行中</span>
+              <span class="mono tx-dim">PID 43360</span>
+              <span class="pill">端口 8080</span>
+              <span class="pill ok">探活 正常</span>
+              <span class="pill acc">网关就绪</span>
+              <span class="spacer"></span>
+              <span class="mono tx-dim tx-micro">对外 IP 192.168.1.23</span>
+            </div>
+            <div class="row mt10">
+              <button type="button" class="btn err full"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="18" height="18" x="3" y="3" rx="2" />
+</svg>停止服务</button>
+              <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+</svg>重启</button>
+              <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>刷新</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">网关配置</h3>
+            <div class="row">
+              <label class="lbl" for="port">监听端口</label>
+              <input type="text" id="port" class="w70" value="8080" inputmode="numeric">
+              <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg>检测占用</button>
+            </div>
+            <div class="row">
+              <label class="lbl" for="api-key">API 密钥</label>
+              <input type="password" id="api-key" class="flex" value="sk-wb2a-7f3c91d40e8b" autocomplete="off" spellcheck="false">
+              <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m18 14 4 4-4 4" />
+  <path d="m18 2 4 4-4 4" />
+  <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
+  <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
+  <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
+</svg>随机</button>
+              <button type="button" class="btn" id="pw-toggle" aria-pressed="false"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn pw-eye"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+  <circle cx="12" cy="12" r="3" />
+</svg><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn pw-eye-off"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+  <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+  <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+  <path d="m2 2 20 20" />
+</svg><span id="pw-tx">显示</span></button>
+            </div>
+            <div class="row mt10">
+              <button type="button" class="btn acc"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+  <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+  <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+</svg>保存并重启</button>
+              <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制接入信息</button>
+            </div>
+            <p class="note mt8">改动端口/密钥后需重启生效；密钥留空 = 不鉴权</p>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">开机自启</h3>
+            <div class="chk-block">
+              <label class="chk">
+                <input type="checkbox" class="cb" checked>
+                <span class="chk-t">开机自启网关</span>
+                <span class="pill ok">已开启</span>
+              </label>
+              <div class="chk-note">登录后自动后台拉起 wb2api.exe（无需打开界面）</div>
+            </div>
+            <div class="chk-block">
+              <label class="chk">
+                <input type="checkbox" class="cb">
+                <span class="chk-t">开机自启本界面</span>
+              </label>
+              <div class="chk-note">以 --minimized 启动，直接驻留托盘，不弹窗口</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">账号池 <span class="pill acc">1 个</span></h3>
+            <table>
+              <thead>
+                <tr><th scope="col">昵称</th><th scope="col">UID</th><th scope="col">域</th><th scope="col" class="w60"><span class="vh">操作</span></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Owner</td>
+                  <td class="mono">1a2b3c4d</td>
+                  <td><span class="pill">global</span></td>
+                  <td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 11v6" />
+  <path d="M14 11v6" />
+  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+  <path d="M3 6h18" />
+  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+</svg>删除</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="note mt8">删除需点两次确认；新增/删除凭证后必须重启网关才生效</p>
+          </div>
+        </section>
+
+        <!-- ══ 添加账号 ══ -->
+        <section class="page" role="tabpanel" id="ac" aria-labelledby="tab-ac" tabindex="0">
+          <h2 class="h">添加账号</h2>
+          <p class="sub">OAuth 设备授权登录，完成后自动重启网关并拉取模型</p>
+
+          <div class="card">
+            <h3 class="card-t" id="ed-lbl">选择版本</h3>
+            <div class="row gap16" role="radiogroup" aria-labelledby="ed-lbl">
+              <label class="chk"><input type="radio" class="radio" name="edition" value="cn" checked><span class="chk-t">国内版 cn</span></label>
+              <label class="chk"><input type="radio" class="radio" name="edition" value="global"><span class="chk-t">国际版 global</span></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">登录流程</h3>
+            <div class="row">
+              <button type="button" class="btn acc"><span class="step">1</span>获取登录链接</button>
+              <button type="button" class="btn"><span class="step">2</span>浏览器打开</button>
+            </div>
+            <div class="row mt4">
+              <button type="button" class="btn green full"><span class="step">3</span>我已完成登录</button>
+            </div>
+            <pre class="term mt10"><span class="d">—</span> 申请授权码…
+<span class="g"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg></span> 已拿到授权链接，请在浏览器完成登录。
+<span class="b">https://copilot.tencent.com/...</span>
+<span class="d">—</span> 用 state 换取 token…
+<span class="g"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg></span> 已保存 workbuddy-1a2b3c4d.json （UID 1a2b3c4d，昵称 Owner）
+<span class="g"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg></span> 每日签到: 成功
+<span class="d">—</span> 正在自动重启网关使账号生效…
+<span class="g"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg></span> 已更新 24 个模型</pre>
+          </div>
+        </section>
+
+        <!-- ══ 用量 ══ -->
+        <section class="page" role="tabpanel" id="us" aria-labelledby="tab-us" tabindex="0">
+          <h2 class="h">Token 用量</h2>
+          <p class="sub">源自网关日志每请求的 tok=N（/status 无 token 计数，/metrics 为 404）</p>
+
+          <div class="tiles">
+            <div class="tile"><div class="k">今日 Token</div><div class="v c1" id="t-tok">57,070</div><div class="u">tokens</div></div>
+            <div class="tile"><div class="k">今日请求</div><div class="v" id="t-req">39</div><div class="u">次</div></div>
+            <div class="tile"><div class="k">成功率</div><div class="v ok" id="t-rate">100%</div><div class="u" id="t-ok">39 / 39</div></div>
+          </div>
+          <div class="tiles">
+            <div class="tile"><div class="k">累计 Token</div><div class="v c2" id="t-total">57,070</div><div class="u">tokens</div></div>
+            <div class="tile"><div class="k">平均速度</div><div class="v" id="t-speed">129</div><div class="u">tok/s</div></div>
+            <div class="tile"><div class="k">平均首字</div><div class="v" id="t-ttfb">2177</div><div class="u">ms</div></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">实时吞吐 <span class="pill ok">采集中</span></h3>
+            <div class="graphs">
+              <div class="graph">
+                <div class="g-head"><span class="g-name">Token 速率</span><span class="g-val" id="g-tok-v">–</span><span class="g-unit">tok/s</span></div>
+                <canvas id="g-tok" aria-hidden="true"></canvas>
+              </div>
+              <div class="graph">
+                <div class="g-head"><span class="g-name">请求速率</span><span class="g-val c2" id="g-req-v">–</span><span class="g-unit">次/分</span></div>
+                <canvas id="g-req" aria-hidden="true"></canvas>
+              </div>
+            </div>
+            <p class="note mt8">60 秒滚动窗口 · 每秒采样 · 曲线样式同任务管理器；预览页为模拟数据流，本页全部统计实时计算</p>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">按模型</h3>
+            <table>
+              <thead>
+                <tr><th scope="col">模型</th><th scope="col" class="r">Token</th><th scope="col" class="r">次数</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">global:deep</td><td class="r" id="m-tok">57,070</td><td class="r" id="m-req">39</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">按账号</h3>
+            <table>
+              <thead>
+                <tr><th scope="col">账号 UID</th><th scope="col" class="r">Token</th><th scope="col" class="r">次数</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">1a2b3c4d</td><td class="r" id="a-tok">57,070</td><td class="r" id="a-req">39</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ══ 模型 ══ -->
+        <section class="page" role="tabpanel" id="md" aria-labelledby="tab-md" tabindex="0">
+          <h2 class="h">模型</h2>
+          <p class="sub">需网关运行中且已加号</p>
+          <div class="row mb11">
+            <button type="button" class="btn acc"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>刷新模型清单</button>
+            <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15V3" />
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  <path d="m7 10 5 5 5-5" />
+</svg>导出 md</button>
+          </div>
+          <div class="card">
+            <h3 class="card-t">可用模型 <span class="pill acc">24</span></h3>
+            <table>
+              <thead>
+                <tr><th scope="col">模型 ID</th><th scope="col">名称</th><th scope="col" class="w44">倍率</th><th scope="col" class="w52"><span class="vh">操作</span></th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">global:deep</td><td>Deep</td><td class="mono">1.0</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:claude</td><td>Claude</td><td class="mono">1.0</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:gpt</td><td>GPT</td><td class="mono">1.0</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:gemini</td><td>Gemini</td><td class="mono">1.0</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:glm</td><td>GLM</td><td class="mono">0.5</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:kimi</td><td>Kimi</td><td class="mono">0.5</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:qwen</td><td>Qwen</td><td class="mono">0.5</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+                <tr><td class="mono">global:hunyuan</td><td>Hunyuan</td><td class="mono">0.5</td><td><button type="button" class="btn sm"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>复制</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ══ 日志 ══ -->
+        <section class="page" role="tabpanel" id="lg" aria-labelledby="tab-lg" tabindex="0">
+          <h2 class="h">日志</h2>
+          <p class="sub">网关运行日志 tail</p>
+          <div class="row mb11">
+            <button type="button" class="btn"><!-- @license lucide-static v1.57.0 - ISC -->
+<svg
+  class="icn"
+  xmlns="http://www.w3.org/2000/svg"
+ 
+ 
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" />
+</svg>打开目录</button>
+            <span class="mono tx-dim tx-micro">logs\gateway.log</span>
+          </div>
+          <div class="card">
+            <h3 class="card-t">最近输出</h3>
+            <pre class="term">| #028 | 01:23:26 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=2028ms | tok=210  | 78.7tok/s  | total=2.7s  |
+| #029 | 01:23:32 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=1700ms | tok=615  | 170.5tok/s | total=3.6s  |
+| #030 | 01:24:06 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=2020ms | tok=433  | 128.0tok/s | total=3.4s  |
+| #031 | 01:24:16 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=1863ms | tok=863  | 165.7tok/s | total=5.2s  |
+| #032 | 01:24:32 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=1671ms | tok=1903 | 168.4tok/s | total=11.3s |
+| #033 | 01:24:41 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=2154ms | tok=708  | 139.0tok/s | total=5.1s  |
+| #034 | 01:24:57 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=1965ms | tok=2094 | 177.9tok/s | total=11.8s |
+| #035 | 01:25:21 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=1844ms | tok=3341 | 193.5tok/s | total=17.3s |
+| #036 | 01:25:35 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=3148ms | tok=1174 | 143.2tok/s | total=8.2s  |
+| #037 | 01:25:51 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=5861ms | tok=463  | 56.5tok/s  | total=8.2s  |
+| #038 | 01:26:05 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=5497ms | tok=2567 | 193.1tok/s | total=13.3s |
+| #039 | 01:26:18 | global:deep | stream | 200 | uid=1a2b3c4d | TTFB=5479ms | tok=1455 | 148.8tok/s | total=9.8s  |</pre>
+          </div>
+        </section>
+
+        <!-- ══ 关于 ══ -->
+        <section class="page" role="tabpanel" id="ab" aria-labelledby="tab-ab" tabindex="0">
+          <h2 class="h">FiimeOPC-2API 专版</h2>
+          <p class="sub">（仅限内部学习交流使用，请勿分发或商业化）</p>
+
+          <div class="card">
+            <h3 class="card-t">社区</h3>
+            <div class="row">
+              <span class="lbl">社区地址：</span>
+              <a class="ilink" href="https://opc.fiime.cn" target="_blank" rel="noopener">opc.fiime.cn</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-t">安全须知</h3>
+            <p class="note" style="margin-bottom:8px">本项目是非官方网关封装，使用 CodeBuddy / WorkBuddy 账号作为上游，涉及目标平台服务条款与账号风险，仅限本人授权账号、本机 / 私有环境使用</p>
+            <p class="note" style="color:var(--warn);margin-bottom:8px">不得用于账号共享、转售、违规分发，或违反目标平台条款的任何用途</p>
+            <p class="note" style="margin-bottom:6px">本项目是网关的 Windows 封装与可视化面板，网关核心为预编译二进制，来自上游项目：</p>
+            <a class="ilink" href="https://github.com/HanawaBanana/workbuddy2api" target="_blank" rel="noopener">https://github.com/HanawaBanana/workbuddy2api</a>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="toastbar" role="status" aria-live="polite">
+        <span class="dot"></span>
+        <span class="t">启动成功（PID 43360）</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* Tab 切换：ARIA tabs 模式 + 方向键导航 */
+  var tabs=[].slice.call(document.querySelectorAll('[role="tab"]'));
+  function select(tab,focus){
+    tabs.forEach(function(t){
+      var on=t===tab;
+      t.setAttribute("aria-selected",on?"true":"false");
+      t.classList.toggle("on",on);
+    });
+    document.querySelectorAll('[role="tabpanel"]').forEach(function(p){
+      p.classList.toggle("on",p.id===tab.getAttribute("aria-controls"));
+    });
+    var sc=document.querySelector(".scroll");
+    if(sc)sc.scrollTop=0;
+    if(focus)tab.focus();
+  }
+  tabs.forEach(function(t,i){
+    t.addEventListener("click",function(){select(t,false);});
+    t.addEventListener("keydown",function(e){
+      var d=null;
+      if(e.key==="ArrowDown"||e.key==="ArrowRight")d=1;
+      else if(e.key==="ArrowUp"||e.key==="ArrowLeft")d=-1;
+      if(d!==null){
+        e.preventDefault();
+        select(tabs[(i+d+tabs.length)%tabs.length],true);
+      }
+    });
+  });
+
+  /* 复选框：同步附属 pill 文案与状态色 */
+  document.querySelectorAll(".chk input[type=checkbox]").forEach(function(cb){
+    var pill=cb.closest(".chk").querySelector(".pill");
+    var sync=function(){
+      if(!pill)return;
+      pill.textContent=cb.checked?"已开启":"已关闭";
+      pill.classList.toggle("ok",cb.checked);
+    };
+    cb.addEventListener("change",sync);
+  });
+
+  /* API 密钥：密码显隐切换 */
+  var pw=document.getElementById("api-key"),pwBtn=document.getElementById("pw-toggle");
+  if(pw&&pwBtn){
+    var pwTx=document.getElementById("pw-tx");
+    var eye=pwBtn.querySelector(".pw-eye"),eyeOff=pwBtn.querySelector(".pw-eye-off");
+    pwBtn.addEventListener("click",function(){
+      var show=pw.type==="password";
+      pw.type=show?"text":"password";
+      if(pwTx)pwTx.textContent=show?"隐藏":"显示";
+      if(eye)eye.hidden=show;
+      if(eyeOff)eyeOff.hidden=!show;
+      pwBtn.setAttribute("aria-pressed",show?"true":"false");
+    });
+  }
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  var reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var WINDOW=60000; // 60s 滚动窗口
+
+  function niceCeil(v){
+    var p=Math.pow(10,Math.floor(Math.log10(v))),n=v/p,f;
+    if(n<=1)f=1;else if(n<=2)f=2;else if(n<=2.5)f=2.5;else if(n<=5)f=5;else f=10;
+    return f*p;
+  }
+
+  /* 单条曲线：网格 + 渐变面积 + 折线 + 当前值，rAF 平滑滚动 */
+  function Graph(cvId,valId,rgb){
+    var cv=document.getElementById(cvId),valEl=document.getElementById(valId);
+    var ctx=cv.getContext("2d"),H=110,pts=[],dispMax=1;
+    function fit(){
+      var r=cv.getBoundingClientRect();
+      if(!r.width)return;
+      var dpr=window.devicePixelRatio||1;
+      cv.width=Math.round(r.width*dpr);
+      cv.height=Math.round(H*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    if(window.ResizeObserver)new ResizeObserver(fit).observe(cv);
+    else window.addEventListener("resize",fit);
+    fit();
+    function push(v,t){pts.push({t:t||performance.now(),v:v});}
+    function draw(){
+      var w=cv.clientWidth;if(!w)return;
+      var now=performance.now();
+      while(pts.length>2&&now-pts[0].t>WINDOW)pts.shift();
+      ctx.clearRect(0,0,w,H);
+      ctx.strokeStyle="rgba(35,43,58,.85)";ctx.lineWidth=1;
+      for(var i=1;i<4;i++){var y=Math.round(H*i/4)+.5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+      for(var j=1;j<6;j++){var x=Math.round(w*j/6)+.5;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+      if(pts.length<2)return;
+      var mx=1;
+      for(i=0;i<pts.length;i++)if(pts[i].v>mx)mx=pts[i].v;
+      var target=niceCeil(mx*1.15);
+      dispMax=reduce?target:dispMax+(target-dispMax)*0.1;
+      var t1=pts[pts.length-1].t;
+      function X(t){return w-(t1-t)/WINDOW*w;}
+      function Y(v){return H-3-(v/dispMax)*(H-6);}
+      var g=ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,"rgba("+rgb+",.28)");
+      g.addColorStop(1,"rgba("+rgb+",0)");
+      ctx.beginPath();
+      ctx.moveTo(X(pts[0].t),Y(pts[0].v));
+      for(i=1;i<pts.length;i++)ctx.lineTo(X(pts[i].t),Y(pts[i].v));
+      ctx.lineTo(X(t1),H);ctx.lineTo(X(pts[0].t),H);ctx.closePath();
+      ctx.fillStyle=g;ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(X(pts[0].t),Y(pts[0].v));
+      for(i=1;i<pts.length;i++)ctx.lineTo(X(pts[i].t),Y(pts[i].v));
+      ctx.strokeStyle="rgb("+rgb+")";ctx.lineWidth=1.5;ctx.lineJoin="round";ctx.stroke();
+      ctx.beginPath();ctx.arc(X(t1),Y(pts[pts.length-1].v),2.5,0,6.2832);
+      ctx.fillStyle="rgb("+rgb+")";ctx.fill();
+      valEl.textContent=Math.round(pts[pts.length-1].v);
+    }
+    return{push:push,draw:draw};
+  }
+
+  var gTok=Graph("g-tok","g-tok-v","79,141,247");   // 蓝
+  var gReq=Graph("g-req","g-req-v","124,92,255");   // 紫
+
+  /* ── 模拟引擎：请求事件流驱动本页全部统计（磁贴 + 两表 + 两图） ── */
+  function $(id){return document.getElementById(id);}
+  var ui={
+    today:$("t-tok"),reqs:$("t-req"),rate:$("t-rate"),rateSub:$("t-ok"),
+    total:$("t-total"),speed:$("t-speed"),ttfb:$("t-ttfb"),
+    mTok:$("m-tok"),mReq:$("m-req"),aTok:$("a-tok"),aReq:$("a-req")
+  };
+  var S={today:57070,cum:57070,total:39,ok:39,spd:129,ttfb:2177,
+         mTok:57070,mReq:39,aTok:57070,aReq:39};
+  var tokRate=160,reqEma=30;
+
+  /* 生成一个采样周期内的请求事件（字段对齐网关日志：tok=N / TTFB / tok/s） */
+  function genEvents(){
+    var n=Math.random()<0.42?1:0;
+    if(Math.random()<0.07)n+=2;
+    var evs=[],i;
+    for(i=0;i<n;i++){
+      var spd=60+Math.random()*140;      // tok/s
+      var dur=3+Math.random()*12;        // 请求耗时 s
+      evs.push({
+        tokens:Math.round(spd*dur),
+        ttfb:Math.round(700+Math.random()*5200),
+        speed:spd,
+        ok:Math.random()>0.03            // 3% 失败率，成功率实时浮动
+      });
+    }
+    return evs;
+  }
+
+  function commit(evs){
+    var sec=0;
+    evs.forEach(function(e){
+      sec+=e.tokens;
+      S.total++; if(e.ok)S.ok++;
+      S.mTok+=e.tokens; S.mReq++;
+      S.aTok+=e.tokens; S.aReq++;
+      S.spd+=(e.speed-S.spd)*0.25;       // 平均速度 EMA
+      S.ttfb+=(e.ttfb-S.ttfb)*0.25;      // 平均首字 EMA
+    });
+    S.today+=sec; S.cum+=sec;
+    tokRate+=(sec-tokRate)*0.35;         // 本秒 token 吞吐 → 曲线
+    reqEma+=(evs.length*60-reqEma)*0.3;  // 次/分 → 曲线
+  }
+
+  function render(){
+    var r=S.total?S.ok/S.total*100:100;
+    if(ui.today)ui.today.textContent=S.today.toLocaleString("en-US");
+    if(ui.reqs)ui.reqs.textContent=S.total;
+    if(ui.rate){ui.rate.textContent=(Math.round(r*10)/10)+"%";ui.rate.classList.toggle("warn",r<95);}
+    if(ui.rateSub)ui.rateSub.textContent=S.ok+" / "+S.total;
+    if(ui.total)ui.total.textContent=S.cum.toLocaleString("en-US");
+    if(ui.speed)ui.speed.textContent=Math.round(S.spd);
+    if(ui.ttfb)ui.ttfb.textContent=Math.round(S.ttfb);
+    if(ui.mTok)ui.mTok.textContent=S.mTok.toLocaleString("en-US");
+    if(ui.mReq)ui.mReq.textContent=S.mReq;
+    if(ui.aTok)ui.aTok.textContent=S.aTok.toLocaleString("en-US");
+    if(ui.aReq)ui.aReq.textContent=S.aReq;
+  }
+
+  /* 预填 60 秒曲线历史（不计入磁贴，磁贴以上次收盘值为起点） */
+  var now0=performance.now(),s;
+  for(s=59;s>=0;s--){
+    var evs=genEvents(),sec=0;
+    evs.forEach(function(e){sec+=e.tokens;});
+    tokRate+=(sec-tokRate)*0.35;
+    reqEma+=(evs.length*60-reqEma)*0.3;
+    gTok.push(tokRate,now0-s*1000);
+    gReq.push(reqEma,now0-s*1000);
+  }
+  render();
+
+  /* 每秒采样：事件流 → 全部统计 + 曲线 */
+  setInterval(function(){
+    var evs=genEvents();
+    commit(evs);
+    gTok.push(tokRate);
+    gReq.push(reqEma);
+    render();
+  },1000);
+
+  /* 渲染循环：平滑滚动；reduced-motion 时降为 1Hz */
+  (function loop(){
+    gTok.draw();gReq.draw();
+    if(reduce)setTimeout(loop,1000);else requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "engine": "Camoufox",
+  "version": "156.0.1-beta.36",
+  "source": "https://github.com/daijro/camoufox/releases/download/v156.0.1-beta.36/camoufox-156.0.1-beta.36-win.x86_64.zip",
+  "source_sha256": "096fd4832a7a32f2aa7f7bdd07fe6253dda296cbe783acd7bc2c86cf5ae62031",
+  "payload_sha256": "d88fe0885e138f4421c5cab373405e806bc0f479f1947cb7c25403db28bd8982",
+  "payload_bytes": 172353441,
+  "source_code": "https://github.com/daijro/camoufox/tree/v156.0.1-beta.36",
+  "fonts": "Native Windows fonts; optional cross-platform fonts omitted"
+}

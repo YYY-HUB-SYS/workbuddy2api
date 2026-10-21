@@ -1,0 +1,25 @@
+[package]
+name = "WorkBuddy2API"
+version = "0.1.6"
+edition = "2024"
+
+[dependencies]
+arboard = "3.6.1"
+rand = "0.8.8"
+zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+raw-window-handle = "0.6.2"
+# 钉在 0.30：egui 0.36 重构了 API（App::ui() 取代 update()、移除 TopBottomPanel、
+# Frame::none() 删除、Rounding 改名 CornerRadius），本项目沿用经典 API 以稳定交付
+eframe = "0.30"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tray-icon = "0.26.1"
+ureq = { version = "3.4.2", features = ["native-tls"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_System_Threading", "Win32_Security"] }
+
+# 单文件交付：优先体积，开启 LTO 与符号剥离
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

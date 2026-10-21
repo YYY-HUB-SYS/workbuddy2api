@@ -1,0 +1,45 @@
+# 运行期产物 / 隐私数据 —— 切勿提交
+auths
+data
+logs
+客户端配置.md
+models-trae.md
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+
+# 含本机 API 密钥，由步骤①自动生成
+config.json
+
+# WorkBuddy 本地会话目录
+.workbuddy/
+.workbuddy-ai/
+
+# 公众号文章素材与成品（非源码，勿提交）
+公众号文章图片/
+*公众号文章*.html
+
+# ---------------------------------------------------------------
+# 构建产物 / 大体积二进制
+# 超过 GitHub 100 MB 单文件上限的内容一律不入库，
+# 改由 GitHub Release 附件分发（见 README「下载与安装」）
+# ---------------------------------------------------------------
+rust/target/
+tools/build/
+tools/dist/
+tools/__pycache__/
+
+# 安装包与发布产物（178 MB，走 Release 附件）
+release/
+
+# Camoufox 浏览器内核（172 MB，走 Release 附件；manifest.json 保留入库）
+browser/camoufox-*.zip
+browser/vendor/
+
+# 本地冒烟测试 / 校验输出
+*.log
+
+# 本机用量报告（含本地路径与账号 UID，不公开）
+usage-report.txt

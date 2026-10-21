@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="tile" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="256"><stop stop-color="#313A5B"/><stop offset="1" stop-color="#191C2E"/></linearGradient>
+    <linearGradient id="glyph" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="256"><stop stop-color="#DFE6FF"/><stop offset="1" stop-color="#95A9FF"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="58" fill="url(#tile)"/>
+  <rect x="9" y="9" width="238" height="238" rx="57" fill="none" stroke="#CAD4FF" stroke-opacity=".16" stroke-width="2"/>
+  <path d="M62 77 L88 179 L128 111 L168 179 L194 77" fill="none" stroke="url(#glyph)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

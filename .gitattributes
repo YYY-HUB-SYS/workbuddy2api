@@ -1,0 +1,17 @@
+# 二进制文件：不做文本 diff / 行尾转换
+*.exe   binary
+*.dll   binary
+*.pyd   binary
+*.zip   binary
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+
+# 脚本行尾：Windows 侧保持 CRLF，其余保持 LF
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+*.sh    text eol=lf
